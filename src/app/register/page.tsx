@@ -1,0 +1,84 @@
+'use client'
+import { useState } from 'react'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+
+export default function RegisterPage() {
+  const [name, setName]         = useState('')
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [role, setRole]         = useState('viewer')
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
+
+  const s: Record<string, React.CSSProperties> = {
+    wrap:  { minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'2rem', background:'#f5f0e8' },
+    box:   { width:'100%', maxWidth:'420px' },
+    card:  { background:'#fff', border:'1px solid #e2ddd6', borderRadius:'8px', padding:'2rem', boxShadow:'0 2px 12px rgba(0,0,0,0.07)' },
+    title: { fontFamily:'Georgia,serif', fontSize:'1.875rem', fontWeight:700, color:'#0f0e0d', textAlign:'center', marginBottom:'0.375rem' },
+    sub:   { color:'#6b6560', textAlign:'center', marginBottom:'1.75rem', fontSize:'0.9rem' },
+    label: { display:'block', fontWeight:700, fontSize:'0.8125rem', marginBottom:'0.35rem', color:'#0f0e0d', textTransform:'uppercase', letterSpacing:'0.04em' },
+    input: { width:'100%', padding:'0.625rem 0.875rem', border:'1.5px solid #d4cfc8', borderRadius:'4px', fontSize:'0.9375rem', outline:'none', boxSizing:'border-box', background:'#faf9f6', color:'#0f0e0d', marginBottom:'1.125rem' },
+    btn:   { width:'100%', padding:'0.75rem', backgroundColor:'#c8442a', color:'#fff', border:'none', borderRadius:'4px', fontWeight:700, fontSize:'1rem', cursor:'pointer', marginTop:'0.25rem' },
+    err:   { background:'#fff0ee', border:'1px solid #f9c4bb', color:'#b83520', padding:'0.7rem', borderRadius:'4px', marginBottom:'0.875rem', fontSize:'0.875rem' },
+    foot:  { textAlign:'center', marginTop:'1.25rem', fontSize:'0.875rem', color:'#6b6560' },
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true); setError('')
+    const supabase = createClient()
+
+    const { data, error: signUpErr } = await supabase.auth.signUp({
+      email, password, options: { data: { name, role } }
+    })
+
+    if (signUpErr) { setError(signUpErr.message); setLoading(false); return }
+    if (!data.user) { setError('Check your email to confirm, then sign in.'); setLoading(false); return }
+
+    // Upsert profile — safe even if DB trigger already created it
+    const { error: upsertErr } = await supabase
+      .from('users')
+      .upsert({ id: data.user.id, name, email, role }, { onConflict: 'id' })
+
+    if (upsertErr) console.warn('Profile upsert:', upsertErr.message)
+
+    window.location.replace('/dashboard')
+  }
+
+  return (
+    <div style={s.wrap}>
+      <div style={s.box}>
+        <div style={s.card}>
+          <p style={s.title}>Create Account</p>
+          <p style={s.sub}>Join the Hivon Blog community</p>
+          <form onSubmit={handleSubmit}>
+            <label style={s.label}>Full Name</label>
+            <input type="text" required autoComplete="name" placeholder="Your name"
+              value={name} onChange={e => setName(e.target.value)} style={s.input} />
+            <label style={s.label}>Email Address</label>
+            <input type="email" required autoComplete="email" placeholder="you@example.com"
+              value={email} onChange={e => setEmail(e.target.value)} style={s.input} />
+            <label style={s.label}>Password</label>
+            <input type="password" required minLength={6} autoComplete="new-password" placeholder="Min. 6 characters"
+              value={password} onChange={e => setPassword(e.target.value)} style={s.input} />
+            <label style={s.label}>I want to…</label>
+            <select value={role} onChange={e => setRole(e.target.value)}
+              style={{ ...s.input, cursor:'pointer' }}>
+              <option value="viewer">Read blogs (Viewer)</option>
+              <option value="author">Write & read (Author)</option>
+            </select>
+            {error && <div style={s.err}>{error}</div>}
+            <button type="submit" disabled={loading}
+              style={{ ...s.btn, backgroundColor: loading ? '#d4826e' : '#c8442a', cursor: loading ? 'not-allowed' : 'pointer' }}>
+              {loading ? 'Creating account…' : 'Create Account'}
+            </button>
+          </form>
+          <p style={s.foot}>Already have an account?{' '}
+            <Link href="/login" style={{ color:'#c8442a', fontWeight:700, textDecoration:'none' }}>Sign in</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

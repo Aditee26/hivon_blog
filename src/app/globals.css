@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,300&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Source Serif 4', serif;
+  --color-ink: #0f0e0d;
+  --color-paper: #f5f0e8;
+  --color-paper-dark: #ede7d9;
+  --color-accent: #c8442a;
+  --color-accent-light: #e86347;
+}
+
+body {
+  background-color: #f5f0e8;
+  color: #2a2724;
+  font-family: var(--font-body);
+}
+
+@layer components {
+  .btn-primary {
+    display: inline-block;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    background-color: #c8442a;
+    color: #f5f0e8;
+    transition: background-color 0.2s;
+  }
+  .btn-primary:hover { background-color: #e86347; }
+
+  .btn-secondary {
+    display: inline-block;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.25rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    border: 2px solid #0f0e0d;
+    color: #0f0e0d;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .btn-secondary:hover { background-color: #0f0e0d; color: #f5f0e8; }
+
+  .input-field {
+    display: block;
+    width: 100%;
+    border-radius: 0.25rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid rgba(15,14,13,0.3);
+    background-color: #f5f0e8;
+    color: #2a2724;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field::placeholder { color: rgba(15,14,13,0.4); }
+  .input-field:focus { border-color: #c8442a; box-shadow: 0 0 0 1px #c8442a; }
+
+  .card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid rgba(15,14,13,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.2;
+    color: #0f0e0d;
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f0e0d;
+  }
+}
