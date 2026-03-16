@@ -54,10 +54,16 @@ Create a .env.local file in the root directory:
 
 env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
 GOOGLE_AI_API_KEY=your_google_ai_api_key
+
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+
 Set up database
 
 Run these SQL commands in your Supabase SQL editor:
@@ -110,7 +116,9 @@ CREATE POLICY "Authenticated users can comment" ON comments FOR INSERT WITH CHEC
 Run the development server
 
 bash
+
 npm run dev
+
 Open your browser
 
 Visit http://localhost:3000
@@ -138,34 +146,59 @@ Click "Deploy"
 Environment Variables for Production
 
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
+
 GOOGLE_AI_API_KEY=your_google_key
+
 NEXT_PUBLIC_SITE_URL=https://your-netlify-url.netlify.app
 
+
 📁 Project Structure
-text
-src/
-├── app/                   # Next.js App Router
-│   ├── api/               # API routes
-│   │   ├── auth/          # Authentication endpoints
-│   │   ├── posts/         # Post CRUD operations
-│   │   └── generate-summary/ # AI summary generation
-│   ├── posts/             # Post pages
-│   │   ├── page.tsx       # Post listing with pagination
-│   │   └── [id]/          # Individual post page
-│   ├── profile/           # User profile page
-│   ├── admin/             # Admin dashboard
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── components/             # Reusable components
-│   ├── auth/              # Auth components
-│   ├── posts/             # Post components
-│   └── comments/          # Comment components
-├── lib/                    # Utilities and config
-│   ├── supabase/          # Supabase client
-│   └── ai/                # Google AI integration
-└── middleware.ts          # Auth middleware
+
+ src/
+ ├── app/                   # Next.js App Router
+ 
+ │   ├── api/               # API routes
+ 
+ │   │   ├── auth/          # Authentication endpoints
+ 
+ │   │   ├── posts/         # Post CRUD operations
+ 
+ │   │   └── generate-summary/ # AI summary generation
+ 
+ │   ├── posts/             # Post pages
+ 
+ │   │   ├── page.tsx       # Post listing with pagination
+ 
+ │   │   └── [id]/          # Individual post page
+ 
+ │   ├── profile/           # User profile page
+ 
+ │   ├── admin/             # Admin dashboard
+ 
+ │   ├── layout.tsx         # Root layout
+ 
+ │   └── page.tsx           # Home page
+ 
+ ├── components/             # Reusable components
+ 
+ │   ├── auth/              # Auth components
+ 
+ │   ├── posts/             # Post components
+ 
+ │   └── comments/          # Comment components
+ 
+ ├── lib/                    # Utilities and config
+ 
+ │   ├── supabase/          # Supabase client
+ 
+ │   └── ai/                # Google AI integration
+ 
+ └── middleware.ts          # Auth middleware
+ 
 
 🧪 Testing the Application
 Test User Roles
@@ -182,11 +215,13 @@ AI summary will be generated automatically
 
 Check post listing page to see the summary
 
+
 🐛 Known Issues & Fixes
 Issue	Solution
 TypeScript error with refreshProfile	Removed unused function from profile page
 Netlify deployment failing	Added netlify.toml configuration
 RLS policy errors	Added proper policies for each table
+
 📝 License
 This project is created for Hivon Automations internship assignment.
 
