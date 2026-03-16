@@ -1,214 +1,211 @@
-# Hivon Blog Platform
- 
-A production-ready blogging platform built for **Hivon Automations LLP**, powered by **Next.js 14**, **Supabase**, and **Google Gemini AI**.
- 
----
- 
-## Tech Stack
- 
-| Layer | Technology |
-|---|---|
-| Frontend + Backend | Next.js 14 (App Router) |
-| Authentication | Supabase Auth |
-| Database | Supabase PostgreSQL |
-| AI Integration | Google Gemini 1.5 Flash |
-| Styling | TailwindCSS |
-| Language | TypeScript |
- 
----
- 
-## Features
- 
-- **Role-based access control** — Viewer / Author / Admin
-- **AI-powered summaries** — Generated once via Gemini, stored permanently
-- **Full-text search** — Search by title or body
-- **Pagination** — 5 posts per page
-- **Comments** — Authenticated users can comment
-- **Protected routes** — Middleware-enforced auth
- 
----
- 
-## Environment Variables
- 
-Copy `.env.example` to `.env.local` and fill in:
- 
-```
-NEXT_PUBLIC_SUPABASE_URL=      # Your Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY= # Supabase anon/public key
-SUPABASE_SERVICE_ROLE_KEY=     # Supabase service role key (server-only)
-GOOGLE_AI_API_KEY=             # Google AI Studio API key
-NEXT_PUBLIC_APP_URL=           # e.g. http://localhost:3000
-```
- 
----
- 
-## Local Development
- 
-```bash
-# 1. Install dependencies
+# Blogging Platform with AI-Powered Summaries
+
+A full-stack blogging platform built with Next.js and Supabase, featuring AI-generated post summaries using Google's Gemini API.
+
+## 🚀 Live Demo
+**[https://hivon-blog.netlify.app](https://hivon-blog.netlify.app)**
+
+## 📋 Tech Stack
+- **Frontend & Backend:** Next.js 14 (App Router)
+- **Authentication:** Supabase Auth
+- **Database:** Supabase PostgreSQL
+- **AI Integration:** Google Gemini API
+- **Deployment:** Netlify
+- **Version Control:** Git & GitHub
+
+## ✨ Features
+
+### User Roles
+| Role | Permissions |
+|------|-------------|
+| **Viewer** | Read posts, view summaries, comment on posts |
+| **Author** | Create posts, edit own posts, view comments |
+| **Admin** | View all posts, edit any post, monitor comments |
+
+### Blog Features
+- 📝 Create posts with title, body, and featured image
+- 🤖 AI-generated summaries (200 words) using Google Gemini
+- 💬 Comment system on posts
+- 🔍 Search posts by title or content
+- 📄 Pagination (10 posts per page)
+- ✏️ Edit posts (Author/Admin only)
+
+## 🛠️ Local Setup
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Supabase account (free)
+- Google AI API key (free)
+
+### Installation Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Aditee26/hivon_blog.git
+   cd hivon_blog
+Install dependencies
+
+bash
 npm install
- 
-# 2. Copy env file
-cp .env.example .env.local
-# Fill in your values
- 
-# 3. Run dev server
+Set up environment variables
+
+Create a .env.local file in the root directory:
+
+env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+GOOGLE_AI_API_KEY=your_google_ai_api_key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+Set up database
+
+Run these SQL commands in your Supabase SQL editor:
+
+sql
+-- Create users table
+CREATE TABLE users (
+    id UUID REFERENCES auth.users PRIMARY KEY,
+    name TEXT,
+    email TEXT UNIQUE,
+    role TEXT CHECK (role IN ('author', 'viewer', 'admin')) DEFAULT 'viewer',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create posts table
+CREATE TABLE posts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    image_url TEXT,
+    author_id UUID REFERENCES users(id),
+    summary TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create comments table
+CREATE TABLE comments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id),
+    comment_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "Anyone can view posts" ON posts FOR SELECT USING (true);
+CREATE POLICY "Authors can insert posts" ON posts FOR INSERT WITH CHECK (auth.uid() = author_id);
+CREATE POLICY "Authors can update own posts" ON posts FOR UPDATE USING (auth.uid() = author_id);
+CREATE POLICY "Admins can update all posts" ON posts FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+);
+
+CREATE POLICY "Anyone can view comments" ON comments FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can comment" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+Run the development server
+
+bash
 npm run dev
-```
- 
-Open [http://localhost:3000](http://localhost:3000)
- 
----
- 
-## Supabase Setup
- 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** and run the contents of `supabase/schema.sql`
-3. Copy your **Project URL** and **anon key** from Settings → API
-4. Copy your **service_role key** from Settings → API (keep secret!)
- 
----
- 
-## Role-Based Access
- 
-| Action | Viewer | Author | Admin |
-|---|---|---|---|
-| View posts | ✅ | ✅ | ✅ |
-| Read AI summaries | ✅ | ✅ | ✅ |
-| Comment | ✅ | ✅ | ✅ |
-| Create posts | ❌ | ✅ | ✅ |
-| Edit own posts | ❌ | ✅ | ✅ |
-| Edit any post | ❌ | ❌ | ✅ |
-| Delete any post | ❌ | ❌ | ✅ |
- 
-Roles are stored in the `users` table and enforced both in API routes and via Supabase RLS policies.
- 
----
- 
-## AI Integration
- 
-File: `src/lib/ai/gemini.ts`
- 
-When a post is created:
-1. Author writes the post body
-2. Clicks **"✨ Generate with Gemini AI"**
-3. Body is sent to `POST /api/generate-summary`
-4. Gemini returns a ~200-word summary
-5. Summary is stored with the post
-6. On all subsequent loads, the stored summary is displayed — **Gemini is never called again**
- 
-Prompt used:
-> "Summarize the following blog article in approximately 200 words. Focus on the key points, main arguments, and conclusions."
- 
----
- 
-## API Routes
- 
-| Route | Method | Description |
-|---|---|---|
-| `/api/posts` | GET | List posts (paginated, searchable) |
-| `/api/posts` | POST | Create new post (author/admin) |
-| `/api/posts/[id]` | GET | Get single post with comments |
-| `/api/posts/[id]` | PUT | Update post (owner or admin) |
-| `/api/posts/[id]` | DELETE | Delete post (owner or admin) |
-| `/api/comments` | GET | Get comments for a post |
-| `/api/comments` | POST | Add comment (authenticated) |
-| `/api/generate-summary` | POST | Generate AI summary via Gemini |
-| `/api/auth/logout` | POST | Sign out |
- 
----
- 
-## VPS Deployment (Linux)
- 
-### 1. Install Node.js
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-```
- 
-### 2. Clone repository
-```bash
-git clone https://github.com/your-org/hivon-blog.git
-cd hivon-blog
-```
- 
-### 3. Install dependencies & build
-```bash
-npm install
-cp .env.example .env.local
-# Edit .env.local with production values
-npm run build
-```
- 
-### 4. Run with PM2
-```bash
-npm install -g pm2
-pm2 start npm --name "hivon-blog" -- start
-pm2 save
-pm2 startup
-```
- 
-### 5. Configure Nginx reverse proxy
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
- 
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
- 
-```bash
-sudo ln -s /etc/nginx/sites-available/hivon-blog /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
- 
-### 6. Enable HTTPS (Let's Encrypt)
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
-```
- 
----
- 
-## Project Structure
- 
-```
+Open your browser
+
+Visit http://localhost:3000
+
+🚢 Deployment
+Deploy to Netlify
+Push your code to GitHub
+
+Log in to Netlify
+
+Click "Add new site" → "Import an existing project"
+
+Connect your GitHub repository
+
+Configure build settings:
+
+Build command: npm run build
+
+Publish directory: .next
+
+Add environment variables (same as .env.local)
+
+Click "Deploy"
+
+Environment Variables for Production
+
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_key
+GOOGLE_AI_API_KEY=your_google_key
+NEXT_PUBLIC_SITE_URL=https://your-netlify-url.netlify.app
+
+📁 Project Structure
+text
 src/
-├── app/
-│   ├── api/posts/          # CRUD API
-│   ├── api/comments/       # Comments API
-│   ├── api/generate-summary/  # Gemini AI API
-│   ├── blog/[id]/          # Post detail page
-│   ├── blog/create/        # Create post
-│   ├── blog/edit/[id]/     # Edit post
-│   ├── dashboard/          # User dashboard
-│   ├── login/              # Auth
-│   ├── register/           # Registration
-│   └── profile/            # User profile
-├── components/
-│   ├── Navbar.tsx
-│   ├── Footer.tsx
-│   ├── BlogCard.tsx
-│   ├── CommentSection.tsx
-│   └── ProtectedRoute.tsx
-├── lib/
-│   ├── supabase/           # Client, server, middleware
-│   └── ai/gemini.ts        # Gemini integration
-├── contexts/AuthContext.tsx
-├── types/index.ts
-└── utils/index.ts
-```
- 
----
- 
-*Built with ❤️ for Hivon Automations LLP*
+├── app/                   # Next.js App Router
+│   ├── api/               # API routes
+│   │   ├── auth/          # Authentication endpoints
+│   │   ├── posts/         # Post CRUD operations
+│   │   └── generate-summary/ # AI summary generation
+│   ├── posts/             # Post pages
+│   │   ├── page.tsx       # Post listing with pagination
+│   │   └── [id]/          # Individual post page
+│   ├── profile/           # User profile page
+│   ├── admin/             # Admin dashboard
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/             # Reusable components
+│   ├── auth/              # Auth components
+│   ├── posts/             # Post components
+│   └── comments/          # Comment components
+├── lib/                    # Utilities and config
+│   ├── supabase/          # Supabase client
+│   └── ai/                # Google AI integration
+└── middleware.ts          # Auth middleware
+
+🧪 Testing the Application
+Test User Roles
+Register a new account → Default role: Viewer
+
+Update role to Author/Admin in Supabase dashboard to test permissions
+
+Test AI Summary Generation
+Login as Author
+
+Create a new post with at least 500 words
+
+AI summary will be generated automatically
+
+Check post listing page to see the summary
+
+🐛 Known Issues & Fixes
+Issue	Solution
+TypeScript error with refreshProfile	Removed unused function from profile page
+Netlify deployment failing	Added netlify.toml configuration
+RLS policy errors	Added proper policies for each table
+📝 License
+This project is created for Hivon Automations internship assignment.
+
+👩‍💻 Author
+Aditee Singh
+
+GitHub: @Aditee26
+
+Email: aditeesingh2006@gmail.com
+
+🙏 Acknowledgments
+Hivon Automations for the assignment opportunity
+
+Next.js team for the amazing framework
+
+Supabase for the backend infrastructure
+
+Google for the Gemini API
+
+Project Repository: https://github.com/Aditee26/hivon_blog
+
+Live Demo: https://hivon-blog.netlify.app
